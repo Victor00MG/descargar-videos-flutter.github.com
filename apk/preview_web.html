@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descargador de Videos - Preview Avanzado</title>
+    <style>
+        :root {
+            --primary-color: #607d8b;
+            --primary-light: #8eacbb;
+            --primary-dark: #34515e;
+            --background-color: #f5f5f5;
+            --surface-color: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --border-color: #dddddd;
+            --shadow: rgba(0,0,0,0.1);
+        }
+        
+        [data-theme="dark"] {
+            --primary-color: #607d8b;
+            --primary-light: #8eacbb;
+            --primary-dark: #34515e;
+            --background-color: #121212;
+            --surface-color: #1e1e1e;
+            --text-color: #ffffff;
+            --text-secondary: #b3b3b3;
+            --border-color: #333333;
+            --shadow: rgba(0,0,0,0.3);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .app-bar {
+            background-color: var(--primary-light);
+            color: var(--text-color);
+            padding: 16px;
+            box-shadow: 0 2px 4px var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .app-title {
+            font-size: 20px;
+            font-weight: 500;
+        }
+        
+        .app-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .container {
+            padding: 16px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: var(--surface-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: background-color 0.3s;
+        }
+        
+        .platforms {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 12px;
+        }
+        
+        .platform {
+            text-align: center;
+        }
+        
+        .platform-icon {
+            font-size: 32px;
+            margin-bottom: 4px;
+            color: var(--primary-color);
+        }
+        
+        .input-container {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        
+        .text-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+        }
+        
+        .text-input:focus {
+            border-color: var(--primary-color);
+        }
+        
+        .input-actions {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 4px;
+        }
+        
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 18px;
+            color: var(--text-secondary);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .icon-btn:hover {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+        
+        .btn {
+            width: 100%;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+            margin-bottom: 16px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+        
+        .btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+        
+        .btn:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.6;
+        }
+        
+        .video-info {
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .video-preview {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .thumbnail {
+            width: 120px;
+            height: 90px;
+            background-color: var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: var(--text-secondary);
+        }
+        
+        .video-details {
+            flex: 1;
+        }
+        
+        .video-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        
+        .video-meta {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            transition: all 0.3s;
+        }
+        
+        .size-info {
+            background-color: var(--primary-light);
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.8;
+        }
+        
+        .status-card {
+            background-color: var(--primary-light);
+            border-left: 4px solid var(--primary-color);
+            opacity: 0.9;
+        }
+        
+        .info-card {
+            text-align: center;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-bar">
+        <div class="app-title">Descargador de Videos</div>
+        <div class="app-actions">
+            <button onclick="toggleTheme()" class="icon-btn" id="theme-btn" title="Cambiar tema">🌙</button>
+            <button onclick="showDownloads()" class="icon-btn" title="Ver descargas">📥</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Plataformas soportadas -->
+        <div class="card">
+            <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                <span id="platform-icon" style="font-size: 24px; margin-right: 8px;">🎬</span>
+                <span style="font-weight: 500;">Plataformas Soportadas</span>
+            </div>
+            <div class="platforms">
+                <div class="platform">
+                    <div class="platform-icon">▶️</div>
+                    <div>YouTube</div>
+                </div>
+                <div class="platform">
+                    <div class="platform-icon">🎵</div>
+                    <div>TikTok</div>
+                </div>
+                <div class="platform">
+                    <div class="platform-icon">📘</div>
+                    <div>Facebook</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Campo de URL -->
+        <div class="input-container">
+            <input 
+                type="text" 
+                class="text-input" 
+                placeholder="Pega aquí la URL del video..."
+                id="url-input"
+                oninput="updatePlatformIcon()"
+            >
+            <div class="input-actions">
+                <button class="icon-btn" onclick="pasteFromClipboard()" title="Pegar">📋</button>
+                <button class="icon-btn" onclick="getVideoInfo()" title="Buscar">🔍</button>
+            </div>
+        </div>
+        
+        <!-- Botón obtener información -->
+        <button class="btn btn-secondary" id="info-btn" onclick="getVideoInfo()">
+            <span id="info-icon">ℹ️</span>
+            <span id="info-text">Obtener Información</span>
+        </button>
+        
+        <!-- Información del video -->
+        <div class="card video-info hidden" id="video-info">
+            <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                <span style="font-size: 24px; margin-right: 8px;">📹</span>
+                <span style="font-weight: 500;">Información del Video</span>
+            </div>
+            
+            <div class="video-preview">
+                <div class="thumbnail" id="thumbnail">
+                    🎬
+                </div>
+                <div class="video-details">
+                    <div class="video-title" id="video-title">
+                        Título del video de ejemplo
+                    </div>
+                    <div class="video-meta" id="video-platform">
+                        Plataforma: YouTube
+                    </div>
+                    <div class="video-meta" id="video-duration">
+                        Duración: 03:45
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Calidad:</label>
+                <select class="select" id="quality-select" onchange="updateSizeInfo()">
+                    <option value="360p">360p (Baja) - 15.2 MB</option>
+                    <option value="480p">480p (Media) - 28.5 MB</option>
+                    <option value="720p" selected>720p (Alta) - 45.8 MB</option>
+                    <option value="1080p">1080p (Máxima) - 78.3 MB</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Formato:</label>
+                <select class="select" id="format-select" onchange="updateSizeInfo()">
+                    <option value="video-audio" selected>🎬 Video + Audio</option>
+                    <option value="video-only">📹 Solo Video</option>
+                    <option value="audio-only">🎵 Solo Audio</option>
+                </select>
+            </div>
+            
+            <div class="size-info">
+                <span>💾</span>
+                <span id="size-info">Tamaño estimado: 45.8 MB</span>
+            </div>
+        </div>
+        
+        <!-- Botón de descarga -->
+        <button class="btn btn-primary hidden" id="download-btn" onclick="downloadVideo()">
+            <span id="download-icon">⬇️</span>
+            <span id="download-text">Descargar Video</span>
+        </button>
+        
+        <!-- Estado -->
+        <div class="card status-card hidden" id="status-card">
+            <div style="font-weight: 500; margin-bottom: 8px;">Estado:</div>
+            <div id="status-text">Listo para descargar</div>
+        </div>
+        
+        <!-- Instrucciones -->
+        <div class="card info-card">
+            <div style="font-size: 32px; margin-bottom: 8px;">ℹ️</div>
+            <div style="font-weight: 500; margin-bottom: 8px;">Instrucciones</div>
+            <div style="text-align: left; line-height: 1.6;">
+                1. Pega la URL del video<br>
+                2. Presiona "Obtener Información"<br>
+                3. Selecciona calidad y formato<br>
+                4. Presiona "Descargar Video"
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let videoInfoLoaded = false;
+        let isDarkMode = localStorage.getItem('isDarkMode') === 'true';
+        
+        // Aplicar tema al cargar
+        applyTheme();
+        
+        const sizeData = {
+            '360p': { 'video-audio': '15.2 MB', 'video-only': '12.1 MB', 'audio-only': '3.1 MB' },
+            '480p': { 'video-audio': '28.5 MB', 'video-only': '23.8 MB', 'audio-only': '4.7 MB' },
+            '720p': { 'video-audio': '45.8 MB', 'video-only': '38.9 MB', 'audio-only': '6.9 MB' },
+            '1080p': { 'video-audio': '78.3 MB', 'video-only': '68.1 MB', 'audio-only': '10.2 MB' }
+        };
+        
+        function applyTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-btn');
+            
+            if (isDarkMode) {
+                body.setAttribute('data-theme', 'dark');
+                themeBtn.textContent = '☀️';
+                themeBtn.title = 'Cambiar a tema claro';
+            } else {
+                body.removeAttribute('data-theme');
+                themeBtn.textContent = '🌙';
+                themeBtn.title = 'Cambiar a tema oscuro';
+            }
+        }
+        
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('isDarkMode', isDarkMode);
+            applyTheme();
+        }
+        
+        function updatePlatformIcon() {
+            const input = document.getElementById('url-input');
+            const icon = document.getElementById('platform-icon');
+            const url = input.value.toLowerCase();
+            
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                icon.textContent = '▶️';
+            } else if (url.includes('tiktok.com')) {
+                icon.textContent = '🎵';
+            } else if (url.includes('facebook.com') || url.includes('fb.watch')) {
+                icon.textContent = '📘';
+            } else {
+                icon.textContent = '🎬';
+            }
+        }
+        
+        async function pasteFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('url-input').value = text;
+                updatePlatformIcon();
+            } catch (err) {
+                alert('No se pudo pegar desde el portapapeles');
+            }
+        }
+        
+        function getVideoInfo() {
+            const input = document.getElementById('url-input');
+            const btn = document.getElementById('info-btn');
+            const icon = document.getElementById('info-icon');
+            const text = document.getElementById('info-text');
+            const videoInfo = document.getElementById('video-info');
+            const downloadBtn = document.getElementById('download-btn');
+            const statusCard = document.getElementById('status-card');
+            const statusText = document.getElementById('status-text');
+            
+            if (!input.value.trim()) {
+                alert('Por favor, ingresa una URL válida');
+                return;
+            }
+            
+            // Simular obtención de información
+            btn.disabled = true;
+            icon.innerHTML = '<div class="loading"></div>';
+            text.textContent = 'Obteniendo info...';
+            statusCard.classList.remove('hidden');
+            statusText.textContent = 'Obteniendo información del video...';
+            
+            setTimeout(() => {
+                // Mostrar información del video
+                videoInfo.classList.remove('hidden');
+                downloadBtn.classList.remove('hidden');
+                
+                // Actualizar información según la plataforma
+                const url = input.value.toLowerCase();
+                const titleEl = document.getElementById('video-title');
+                const platformEl = document.getElementById('video-platform');
+                const durationEl = document.getElementById('video-duration');
+                const thumbnailEl = document.getElementById('thumbnail');
+                
+                if (url.includes('youtube')) {
+                    titleEl.textContent = 'Cómo crear una app móvil increíble';
+                    platformEl.textContent = 'Plataforma: YouTube';
+                    durationEl.textContent = 'Duración: 12:34';
+                    thumbnailEl.innerHTML = '<img src="https://via.placeholder.com/120x90/607d8b/ffffff?text=YT" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">';
+                } else if (url.includes('tiktok')) {
+                    titleEl.textContent = 'Tutorial de programación divertido';
+                    platformEl.textContent = 'Plataforma: TikTok';
+                    durationEl.textContent = 'Duración: 00:45';
+                    thumbnailEl.innerHTML = '<img src="https://via.placeholder.com/120x90/607d8b/ffffff?text=TT" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">';
+                } else {
+                    titleEl.textContent = 'Video educativo de tecnología';
+                    platformEl.textContent = 'Plataforma: Facebook';
+                    durationEl.textContent = 'Duración: 08:21';
+                    thumbnailEl.innerHTML = '<img src="https://via.placeholder.com/120x90/607d8b/ffffff?text=FB" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">';
+                }
+                
+                updateSizeInfo();
+                
+                btn.disabled = false;
+                icon.textContent = 'ℹ️';
+                text.textContent = 'Obtener Información';
+                statusText.textContent = 'Información obtenida correctamente';
+                videoInfoLoaded = true;
+                
+                setTimeout(() => {
+                    statusCard.classList.add('hidden');
+                }, 2000);
+            }, 2000);
+        }
+        
+        function updateSizeInfo() {
+            const quality = document.getElementById('quality-select').value;
+            const format = document.getElementById('format-select').value;
+            const sizeInfo = document.getElementById('size-info');
+            
+            const size = sizeData[quality][format];
+            sizeInfo.textContent = `Tamaño estimado: ${size}`;
+        }
+        
+        function downloadVideo() {
+            if (!videoInfoLoaded) {
+                alert('Primero obtén la información del video');
+                return;
+            }
+            
+            const btn = document.getElementById('download-btn');
+            const icon = document.getElementById('download-icon');
+            const text = document.getElementById('download-text');
+            const statusCard = document.getElementById('status-card');
+            const statusText = document.getElementById('status-text');
+            
+            // Simular descarga
+            btn.disabled = true;
+            icon.innerHTML = '<div class="loading"></div>';
+            text.textContent = 'Descargando...';
+            statusCard.classList.remove('hidden');
+            statusText.textContent = 'Descargando video...';
+            
+            setTimeout(() => {
+                statusText.textContent = '¡Descarga completada exitosamente!';
+                btn.disabled = false;
+                icon.textContent = '⬇️';
+                text.textContent = 'Descargar Video';
+                
+                setTimeout(() => {
+                    statusCard.classList.add('hidden');
+                    document.getElementById('url-input').value = '';
+                    document.getElementById('video-info').classList.add('hidden');
+                    document.getElementById('download-btn').classList.add('hidden');
+                    videoInfoLoaded = false;
+                    updatePlatformIcon();
+                }, 3000);
+            }, 4000);
+        }
+        
+        function showDownloads() {
+            alert('Pantalla de descargas\n\nAquí verías:\n• Lista de videos descargados\n• Miniaturas de los videos\n• Información de calidad y formato\n• Tamaño de archivos\n• Opciones para eliminar');
+        }
+    </script>
+</body>
+</html>
